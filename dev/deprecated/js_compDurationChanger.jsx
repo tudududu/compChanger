@@ -1,13 +1,13 @@
-// compDurationChanger_240408_v02
+// compDurationChanger_240408_v03
 
 compDurationChange();
 
 function compDurationChange() {
 
-    app.beginUndoGroup("Make output compositions");
+    app.beginUndoGroup("Change comp duration");
 
         var selected = app.project.selection;
-        var newDuration = 5;
+        var newDuration = 25;
 
         if (selected.length == 0) {
             alert("Select a composition");
@@ -22,11 +22,18 @@ function compDurationChange() {
         var foundCopmArr = [];
         for (var j = 0; j < selectedArr.length; j++) {
             if (selectedArr[j] instanceof CompItem) {
-            alert(levelOrderTraversal(selectedArr[j]));
-            //layerInspection(selectedArr[j], newDuration);
+            //alert(levelOrderTraversal(selectedArr[j]));
+            layerInspectionCycle(selectedArr[j], newDuration);
             }
         }
-        //alert(foundCopmArr);
+        
+    }
+
+    function layerInspectionCycle(selectedComp, newDuration) {
+        const subCompArr = levelOrderTraversal(selectedComp);
+        for (var i = 0; i < subCompArr.length; i++) {
+            layerInspection(subCompArr[i], newDuration);
+        }
     }
 
 //  hleda jmena slatu v comp - zrusit a vymenit za layerInspection2
@@ -47,9 +54,29 @@ function compDurationChange() {
                 layer.outPoint = newDuration;
         }
         //alert(foundLayersArr);
-        //return foundLayersArr;                  
+        //return foundLayersArr;
     }
 
+
+    function folderPath(item) {
+        var objArr = [item];
+        
+        do {
+            if (item.length > 0) {
+                for (var j = 1; j <= item.length; j++) {
+                var layerSource = item[j].source;
+                            
+                if (layerSource instanceof CompItem) {  // pokud je vrstva slate jdeme ho hledat
+                    objArr.push(layerSource);
+                    }
+                }
+                item = item.parentFolder;
+                objArr.push(item);
+            }
+        } while(item.length > 0);
+        
+        return objArr;
+    }
 
 
 function levelOrderTraversal(root) {
@@ -72,7 +99,7 @@ function levelOrderTraversal(root) {
 			// and print it
 			var item = q[0];
 			q.shift();
-			arr.push(item.name);
+			arr.push(item);
 			//console.log(p.key + " ");
             var itemLayers = item.layers;
 			// push all children of the dequeued item
@@ -85,7 +112,7 @@ function levelOrderTraversal(root) {
 		}
 		
 		// Print new line between two levels
-		arr.push("<br>");
+		//arr.push("<br>");
 		//console.log("<br>"); 
 	}
 	return arr;
