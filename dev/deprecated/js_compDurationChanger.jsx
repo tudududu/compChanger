@@ -1,4 +1,4 @@
-// compDurationChanger_240310_v01b
+// compDurationChanger_240315_v01c
 
 compDurationChange();
 
@@ -70,8 +70,9 @@ function folderPath(item) {
     return objArr;
 }
 
-var children = [];  //  nefunguje kdyz je childern venku
-function searchForChildren(tree, children) {
+function searchForChildren(tree) {
+    var children = [];  //  nefunguje kdyz je childern venku
+    children.push(tree);
     var compLayerArr = tree.layers; // prohlidka vrstev
     for (var i = 1; i <= compLayerArr.length; i++) {
         var layerSource = compLayerArr[i].source;
@@ -79,10 +80,10 @@ function searchForChildren(tree, children) {
             children.push(layerSource);
         }
     };
-    for (var child in children) {
+    /*for (var child in children) {
         var childrenTemp = searchForChildren(child);
         children.push(childrenTemp);
-    }
+    }*/
     return children;
     }
 
