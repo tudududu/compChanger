@@ -1,4 +1,4 @@
-// compDurationChanger_240315_v01c
+// compDurationChanger_240408_v02
 
 compDurationChange();
 
@@ -22,7 +22,7 @@ function compDurationChange() {
         var foundCopmArr = [];
         for (var j = 0; j < selectedArr.length; j++) {
             if (selectedArr[j] instanceof CompItem) {
-            alert(searchForChildren(selectedArr[j]));
+            alert(levelOrderTraversal(selectedArr[j]));
             //layerInspection(selectedArr[j], newDuration);
             }
         }
@@ -50,48 +50,43 @@ function compDurationChange() {
         //return foundLayersArr;                  
     }
 
-function folderPath(item) {
-    var objArr = [item];
-    
-    do {
-        if (item.length > 0) {
-            for (var j = 1; j <= item.length; j++) {
-            var layerSource = item[j].source;
-                        
-            if (layerSource instanceof CompItem) {  // pokud je vrstva slate jdeme ho hledat
-                objArr.push(layerSource);
+
+
+function levelOrderTraversal(root) {
+	if (root == null)
+		return;
+
+	// Standard level order traversal code
+	// using queue
+    var arr = [];
+	var q = []; // Create a queue
+	q.push(root); // push root 
+	while (q.length != 0)
+	{
+		var n = q.length;
+
+		// If this node has children
+		while (n > 0)
+		{
+			// Dequeue an item from queue
+			// and print it
+			var item = q[0];
+			q.shift();
+			arr.push(item.name);
+			//console.log(p.key + " ");
+            var itemLayers = item.layers;
+			// push all children of the dequeued item
+			for (var i = 1; i <= item.layers.length; i++) {
+                if (item.layers[i].source instanceof CompItem) {
+				q.push(item.layers[i].source);
+                    }
                 }
-            }
-            item = item.parentFolder;
-            objArr.push(item);
-        }
-    } while(item.length > 0);
-    
-    return objArr;
+			n--;
+		}
+		
+		// Print new line between two levels
+		arr.push("<br>");
+		//console.log("<br>"); 
+	}
+	return arr;
 }
-
-function searchForChildren(tree) {
-    var children = [];  //  nefunguje kdyz je childern venku
-    children.push(tree);
-    var compLayerArr = tree.layers; // prohlidka vrstev
-    for (var i = 1; i <= compLayerArr.length; i++) {
-        var layerSource = compLayerArr[i].source;
-        if (layerSource instanceof CompItem) {
-            children.push(layerSource);
-        }
-    };
-    /*for (var child in children) {
-        var childrenTemp = searchForChildren(child);
-        children.push(childrenTemp);
-    }*/
-    return children;
-    }
-
-/*
-function setItemDuration(itemArr, newDuration) {
-    var itelArr = 
-    for (var i = 0; itemArr.length; i++) {
-        itemArr[i].duration = newDuration;
-    }
-}
-*/
