@@ -1,4 +1,4 @@
-// compDurationChanger_240224_v00b
+// compDurationChanger_240224_v01a
 
 compDurationChange();
 
@@ -48,6 +48,26 @@ function compDurationChange() {
         //alert(foundLayersArr);
         //return foundLayersArr;                  
     }
+
+function folderPath(item) {
+    var objArr = [item];
+    
+    do {
+        if (item.length > 0) {
+            for (var j = 1; j <= item.length; j++) {
+            var layerSource = item[j].source;
+                        
+            if (layerSource instanceof CompItem) {  // pokud je vrstva slate jdeme ho hledat
+                objArr.push(layerSource);
+                }
+            }
+            item = item.parentFolder;
+            objArr.push(item);
+        }
+    } while(item.length > 0);
+    
+    return objArr;
+}
 /*
 function setItemDuration(itemArr, newDuration) {
     var itelArr = 
@@ -56,15 +76,3 @@ function setItemDuration(itemArr, newDuration) {
     }
 }
 */
-function folderPath(item) {
-    var objArr = [item];
-    
-    do {
-        if(item.parentFolder != app.project.rootFolder) {
-            item = item.parentFolder;
-            objArr.push(item);
-        }
-    } while(item.parentFolder != app.project.rootFolder);
-    
-    return objArr;
-}
