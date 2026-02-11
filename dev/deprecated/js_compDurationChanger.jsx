@@ -1,4 +1,4 @@
-// compDurationChanger_240224_v01a
+// compDurationChanger_240310_v01b
 
 compDurationChange();
 
@@ -22,7 +22,8 @@ function compDurationChange() {
         var foundCopmArr = [];
         for (var j = 0; j < selectedArr.length; j++) {
             if (selectedArr[j] instanceof CompItem) {
-            foundCopmArr.push(layerInspection(selectedArr[j], newDuration));
+            alert(searchForChildren(selectedArr[j]));
+            //layerInspection(selectedArr[j], newDuration);
             }
         }
         //alert(foundCopmArr);
@@ -68,6 +69,23 @@ function folderPath(item) {
     
     return objArr;
 }
+
+var children = [];  //  nefunguje kdyz je childern venku
+function searchForChildren(tree, children) {
+    var compLayerArr = tree.layers; // prohlidka vrstev
+    for (var i = 1; i <= compLayerArr.length; i++) {
+        var layerSource = compLayerArr[i].source;
+        if (layerSource instanceof CompItem) {
+            children.push(layerSource);
+        }
+    };
+    for (var child in children) {
+        var childrenTemp = searchForChildren(child);
+        children.push(childrenTemp);
+    }
+    return children;
+    }
+
 /*
 function setItemDuration(itemArr, newDuration) {
     var itelArr = 
