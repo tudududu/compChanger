@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-240921
+241007
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -29,9 +29,9 @@ v02f    == v02e
 v02g    better describtion
         Dimension: priprava na vylepseni - zatim nepouzito, vlozeny 2 funkce:
         makeParentLayerOfAllUnparented(), moveParent()
-
-v02x    vylepsit prejmenovator
+v02h    better description, reorder
 */
+
 
 
 (function (thisObj) {
@@ -43,7 +43,7 @@ v02x    vylepsit prejmenovator
 
     function newPanel(thisObj) {
 
-        var vers = '02g';
+        var vers = '02h';
         var title = 'compChanger_v' + vers + '';
 
         var win = (thisObj instanceof Panel) 
@@ -257,18 +257,6 @@ v02x    vylepsit prejmenovator
         }
     }
 
-    function duration(comp, input) {
-        if (input != "") {
-            if(isNaN(parseFloat(input))) {
-                alertStr = ("Not a number for Duration\r");
-                inDuration.text = "";    // clear field in case of NaN input
-            } else {
-        var inputDecimalFix = input.replace(/,/, ".");
-        var newDuration = parseFloat(inputDecimalFix).toFixed(2);
-        comp.duration = newDuration;
-            }
-        }
-    }
     //---------------dimension----------------
     function makeParentLayerOfAllUnparented(theComp, newParent)
     {
@@ -303,18 +291,30 @@ v02x    vylepsit prejmenovator
 
 
     //---------------compDurationChange----------------
-    //---------------core----------------
+    //---change-only-selected-comp-duration----------------
+    function duration(comp, input) {
+        if (input != "") {
+            if(isNaN(parseFloat(input))) {
+                alertStr = ("Not a number for Duration\r");
+                inDuration.text = "";    // clear field in case of NaN input
+            } else {
+        var inputDecimalFix = input.replace(/,/, ".");
+        var newDuration = parseFloat(inputDecimalFix).toFixed(2);
+        comp.duration = newDuration;
+            }
+        }
+    }
+    //---change-including-the-comps-content----------------
     function durationInDepht(selectedComp, newDuration) {
         const subCompArr = levelOrderTraversal(selectedComp);
         for (var i = 0; i < subCompArr.length; i++) {
-            layerInspection(subCompArr[i], newDuration);
+            changeDuration(subCompArr[i], newDuration);
         }
     
-
     //  setting the dur for layers of the comp
     //  layer - set new out point
-    //  layer-comp - set new duration of the source comp
-    function layerInspection(comp, newDuration) {
+    //  layer-comp - set new duration to the source comp
+    function changeDuration(comp, newDuration) {
         
         var compLayerArr = comp.layers; // prohlidka vrstev
         comp.duration = newDuration;
@@ -402,9 +402,8 @@ v02x    vylepsit prejmenovator
     }
     //------------------------------------
     
-
+    // app.beginUndoGroup("Change Selected Comps")
 
 
 
 })(this);
-
