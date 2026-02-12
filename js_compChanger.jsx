@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-240603
+240921
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -25,8 +25,14 @@ v02d    add event listener key "Enter" to 'replace with'
 v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
         Zkracovator: Opraven vypocet konce
 v02e    Prejmenovator: event listener key "Enter" added to 'Apply'
-v02f    vylepsit prejmenovator
+v02f    == v02e
+v02g    better describtion
+        Dimension: priprava na vylepseni - zatim nepouzito, vlozeny 2 funkce:
+        makeParentLayerOfAllUnparented(), moveParent()
+
+v02x    vylepsit prejmenovator
 */
+
 
 (function (thisObj) {
     //  globals: //
@@ -37,7 +43,7 @@ v02f    vylepsit prejmenovator
 
     function newPanel(thisObj) {
 
-        var vers = '02e';
+        var vers = '02g';
         var title = 'compChanger_v' + vers + '';
 
         var win = (thisObj instanceof Panel) 
@@ -51,7 +57,8 @@ v02f    vylepsit prejmenovator
         win.preferredSize = [200, 300];
         var buttonSize = [30, 23];
 
-     //  ================panel01================oo
+     // ================panel01================oo
+     // ================Prejmenovator================oo
         var panel01 = win.add('panel', undefined, 'Prejmenovator');
             panel01.orientation = 'column';
             panel01.alignChildren = 'fill';
@@ -78,6 +85,7 @@ v02f    vylepsit prejmenovator
         var btnApplyRename = panel01group02.add('button', undefined, 'Apply');
         
         // --- Action ---
+        //  "Enter" v poli "Replace" spusti funkci
         txtInputReplace.addEventListener("keydown", function(kd) {pressed (kd)});
         function pressed(k) {
             if (k.keyName === "Enter") {
@@ -85,7 +93,7 @@ v02f    vylepsit prejmenovator
                 triggerPrejmen();
             }
         }
-
+        //  "Enter" na tlacitku spusti funkci
         btnApplyRename.addEventListener("keydown", function(kd) {pressed_02 (kd)});
         function pressed_02(k) {
             if (k.keyName === "Enter") {
@@ -97,7 +105,7 @@ v02f    vylepsit prejmenovator
                 //alert("You pressed " + k.keyName);
             }*/
         }
-
+        //  "Click" na tlacitko spusti funkci
         btnApplyRename.onClick = function () {
             triggerPrejmen();
             }
@@ -108,7 +116,7 @@ v02f    vylepsit prejmenovator
         }
         
     //  ================panel02================oo
-    //  comp dur, width, height, fps
+    //  input fields: comp dur, width, height, fps
     //  
         //  --------panel02--------fields--------
         var panel02 = win.add('panel', undefined, 'comp settings');
@@ -167,7 +175,6 @@ v02f    vylepsit prejmenovator
             var newTextInput = inDuration.text;
             if (!durChkBx.value) {
             compParamChange(duration, newTextInput);
-            //durationInDepht(selectedComp, newDuration);
             } else {
             compParamChange(durationInDepht, newTextInput);
             }
@@ -176,12 +183,15 @@ v02f    vylepsit prejmenovator
             var newIn = inWorkAreaIn.text;
             compParamChange(zkracovator, newIn);
         }
-
+        // WorkAreaIn reaguje na onChange
         inWorkAreaIn.onChange = triggerCompIn;
+        //  ostatni zamerne nikoli
         //inDimensionX.onChange = triggerDimension;
         //inFps.onChange = triggerFPS;
         //inDuration.onChange = triggerDur;
-
+        
+        //  OK button spousti vsechny funkce
+        //  tohle predelat
         btn00.onClick = function () {
             triggerCompIn();
             triggerDimension();
@@ -189,7 +199,7 @@ v02f    vylepsit prejmenovator
             triggerDur();
             };
 
-    //  ================panel03================oo
+    //  ================panel02_konec================oo
 
         // --- ACTIONS ---
         win.onResizing = win.onResize = function () {
@@ -199,6 +209,8 @@ v02f    vylepsit prejmenovator
             ? (win.center(), win.show()) : (win.layout.layout(true), win.layout.resize());
 
     }
+    //  ================UI_konec================oo
+
     //------------------------callback------------
         
     //------------------------------------
@@ -257,6 +269,25 @@ v02f    vylepsit prejmenovator
             }
         }
     }
+    //---------------dimension----------------
+    function makeParentLayerOfAllUnparented(theComp, newParent)
+    {
+    for (var i = 1; i <= theComp.numLayers; i++) {
+        var curLayer = theComp.layer(i);
+        if (curLayer.locked) {curLayer.locked = false;}
+        if (curLayer != newParent && curLayer.parent == null) {
+            curLayer.parent = newParent;
+            }
+        }
+    }
+    
+    function moveParent(pa, axis, amt) {
+        //null is at 000 anyway, so no math needed
+        newPos = [0, 0, 0];
+        newPos[axis] = amt;
+        pa.position.setValue(newPos);
+    }
+
     
     function dimension(comp, inputX, inputY) {
         var numX = parseInt(inputX);
@@ -268,7 +299,7 @@ v02f    vylepsit prejmenovator
         comp.height = numY;
         }
     }
-    
+    //---------------//----------------
 
 
     //---------------compDurationChange----------------
@@ -281,6 +312,8 @@ v02f    vylepsit prejmenovator
     
 
     //  setting the dur for layers of the comp
+    //  layer - set new out point
+    //  layer-comp - set new duration of the source comp
     function layerInspection(comp, newDuration) {
         
         var compLayerArr = comp.layers; // prohlidka vrstev
@@ -293,10 +326,10 @@ v02f    vylepsit prejmenovator
             if (layerSource instanceof CompItem) {
                 layerSource.duration = newDuration;
             }
-                layer.outPoint = newDuration;
+            layer.outPoint = newDuration;
         }
     }
-
+    //  iterating through the subComps
     function levelOrderTraversal(root) {
         if (root == null)
             return;
@@ -333,6 +366,7 @@ v02f    vylepsit prejmenovator
 
     
     //------------------------------------
+    //  main starter function calling the looping function changeMulti()
     function compParamChange(callback, input1, input2) {
 
     var undoTitle = "Change " + callback.name;
@@ -350,6 +384,7 @@ v02f    vylepsit prejmenovator
     
 
     //------------------------------------
+    //  implementing the particular functions for selected comps
         function changeMulti(array, callback, input1, input2) {
         for (var index = 0; index < array.length; index++) {
             var element = array[index];
