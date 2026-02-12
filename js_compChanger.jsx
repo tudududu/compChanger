@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-240511
+240516
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -15,6 +15,7 @@ v01e    Zmena UI - zkracovator do comp panelu
         reaguje az po nastaveni 0 a pak dalsiho cisla a jeste spatne pocita konec
         patrani: funguje pokud btn00 spousti jen triggerCompIn (ostatni funkce vypnute)
         nalez: ostatni fce vrati chybu, protoze nemaji osetreny chybejici vstup
+v02a    reorganizace, zkracovator spatne pocita konec, nic jineho nefunguje
 */
 
 (function (thisObj) {
@@ -26,7 +27,7 @@ v01e    Zmena UI - zkracovator do comp panelu
 
     function newPanel(thisObj) {
 
-        var vers = '01e';
+        var vers = '02a';
         var title = 'compChanger_v' + vers + '';
 
         var win = (thisObj instanceof Panel) 
@@ -68,9 +69,14 @@ v01e    Zmena UI - zkracovator do comp panelu
         
       // --- Action ---
             applyBtn.onClick = function () {
-            prejmenovator(txtInputSearch.text, txtInputReplace.text);
+            triggerPrejmen();
             }
-
+        function triggerPrejmen() {
+            var oldString = txtInputSearch.text;
+            var newString = txtInputReplace.text;
+            compParamChange(prejmenOvatorEngine, oldString, newString);
+        }
+        
     //  ================panel02================oo
     //  comp dur, width, height, fps
     //  
@@ -102,7 +108,7 @@ v01e    Zmena UI - zkracovator do comp panelu
         var labelTwo = panel02_group_2.add('statictext', undefined, 'Framerate: ');
         var labelThree = panel02_group_3.add('statictext', undefined, 'Duration: ');
         //  input text
-        var inWorkAreaIn = panel02_group_01.add('edittext', undefined, '1', {enterKeySignalsOnChange: false});
+        var inWorkAreaIn = panel02_group_01.add('edittext', undefined, undefined, {enterKeySignalsOnChange: false});
             inWorkAreaIn.characters = 10;
         var inDimensionX = panel02_group_0.add('edittext', undefined, undefined, {enterKeySignalsOnChange: false});
             inDimensionX.characters = 10;
@@ -112,7 +118,8 @@ v01e    Zmena UI - zkracovator do comp panelu
             inFps.characters = 10;
         var inDuration = panel02_group_3.add('edittext', undefined, undefined, {enterKeySignalsOnChange: false});
             inDuration.characters = 10;
-        
+        var durChkBx = panel02_groupA.add('checkbox', undefined, 'Duration including subComps');
+            durChkBx.value = false;
         //  apply Button
         var btn00 = panel02_groupA.add('button', undefined, 'OK');
 
@@ -128,22 +135,29 @@ v01e    Zmena UI - zkracovator do comp panelu
         }
         function triggerDur() {
             var newTextInput = inDuration.text;
+            if (!durChkBx.value) {
             compParamChange(duration, newTextInput);
+            //durationInDepht(selectedComp, newDuration);
+            } else {
+            compParamChange(durationInDepht, newTextInput);
+            }
         }
         function triggerCompIn() {
             var newIn = inWorkAreaIn.text;
             compParamChange(zkracovator, newIn);
         }
+
         inWorkAreaIn.onChange = triggerCompIn;
         //inDimensionX.onChange = triggerDimension;
         //inFps.onChange = triggerFPS;
         //inDuration.onChange = triggerDur;
 
-        btn00.onClick = triggerCompIn;
-        
-        btn00.onClick = triggerDimension;
-        //btn00.onClick = triggerFPS;
-        //btn00.onClick = triggerDur;
+        btn00.onClick = function () {
+            triggerCompIn();
+            triggerDimension();
+            triggerFPS();
+            triggerDur();
+            };
 
     //  ================panel03================oo
 
@@ -156,12 +170,33 @@ v01e    Zmena UI - zkracovator do comp panelu
 
     }
     //------------------------callback------------
+        
+    //------------------------------------
+    function prejmenOvatorEngine(comp, oldString, newString) {
+      //for (var index = 0; index < array.length; index++) {
+          //var element = array[index]; //  uma item da seleção
+          
+          var oldName = comp.name; // nome da item
+          var newName = oldName.replace(oldString, newString);
+              
+              comp.name = newName;
+          //  fixing broken expressions due to the change of the name;              
+          app.project.autoFixExpressions(oldName, newName);
+    }
+    
     //  work area IN
     function zkracovator(comp, startTimeL) {
+        if (startTimeL != "") {
+            if(isNaN(parseFloat(startTimeL))) {
+                alertStr = ("Not a number for Width\r");
+                inWorkAreaIn.text = "";    // clear field in case of NaN input
+            } else {
         var compDur = comp.duration;
         var compDurFixed = compDur.toFixed(0); //round to integer
         comp.workAreaStart = startTimeL;
         comp.workAreaDuration = compDurFixed - startTimeL;
+            }
+        }
     }
     
     function fps(comp, input) {
@@ -201,7 +236,74 @@ v01e    Zmena UI - zkracovator do comp panelu
         comp.height = numY;
         }
     }
+    
+
+
+    //---------------compDurationChange----------------
+    //---------------core----------------
+    function durationInDepht(selectedComp, newDuration) {
+        const subCompArr = levelOrderTraversal(selectedComp);
+        for (var i = 0; i < subCompArr.length; i++) {
+            layerInspection(subCompArr[i], newDuration);
+        }
+    
+
+    //  setting the dur for layers of the comp
+    function layerInspection(comp, newDuration) {
         
+        var compLayerArr = comp.layers; // prohlidka vrstev
+        var foundLayersArr = [];
+        comp.duration = newDuration;
+
+        for (var j = 1; j <= compLayerArr.length; j++) {
+            var layerSource = compLayerArr[j].source;
+            var layer = compLayerArr[j];
+            
+            if (layerSource instanceof CompItem) {  // pokud je vrstva slate jdeme ho hledat
+                //foundLayersArr.push(layerSource.name);
+                layerSource.duration = newDuration;
+            }
+                layer.outPoint = newDuration;
+        }
+        //alert(foundLayersArr);
+        //return foundLayersArr;
+    }
+
+    function levelOrderTraversal(root) {
+        if (root == null)
+            return;
+
+        // Standard level order traversal code
+        // using queue
+        var arr = [];
+        var q = []; // Create a queue
+        q.push(root); // push root 
+        while (q.length != 0) {
+            var n = q.length;
+
+            // If this node has children
+            while (n > 0) {
+                // Dequeue an item from queue
+                // and print it
+                var item = q[0];
+                q.shift();
+                arr.push(item);
+                //console.log(p.key + " ");
+                var itemLayers = item.layers;
+                // push all children of the dequeued item
+                for (var i = 1; i <= item.layers.length; i++) {
+                    if (item.layers[i].source instanceof CompItem) {
+                    q.push(item.layers[i].source);
+                        }
+                    }
+                n--;
+            }
+        }
+        return arr;
+    }
+    }
+
+    
     //------------------------------------
     function compParamChange(callback, input1, input2) {
 
@@ -233,5 +335,9 @@ v01e    Zmena UI - zkracovator do comp panelu
     }    
     //------------------------------------
     
+
+
+
+
 })(this);
 
