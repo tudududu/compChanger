@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-240531
+240603
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -24,6 +24,8 @@ v02d    add event listener key "Enter" to 'replace with'
         vylepsit prejmenovator
 v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
         Zkracovator: Opraven vypocet konce
+v02e    Prejmenovator: event listener key "Enter" added to 'Apply'
+v02f    vylepsit prejmenovator
 */
 
 (function (thisObj) {
@@ -35,7 +37,7 @@ v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
 
     function newPanel(thisObj) {
 
-        var vers = '02d';
+        var vers = '02e';
         var title = 'compChanger_v' + vers + '';
 
         var win = (thisObj instanceof Panel) 
@@ -73,7 +75,7 @@ v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
             txtInputReplace.characters = 25;
         
         //  apply Button
-        var applyBtn = panel01group02.add('button', undefined, 'Apply');
+        var btnApplyRename = panel01group02.add('button', undefined, 'Apply');
         
         // --- Action ---
         txtInputReplace.addEventListener("keydown", function(kd) {pressed (kd)});
@@ -83,8 +85,20 @@ v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
                 triggerPrejmen();
             }
         }
-        //inDimensionX.onChange = triggerDimension;
-            applyBtn.onClick = function () {
+
+        btnApplyRename.addEventListener("keydown", function(kd) {pressed_02 (kd)});
+        function pressed_02(k) {
+            if (k.keyName === "Enter") {
+                //alert("You pressed " + k.keyName);
+                triggerPrejmen();
+            }
+            /*if (k.keyName === "Tab") {
+                txtInputSearch.active = true;
+                //alert("You pressed " + k.keyName);
+            }*/
+        }
+
+        btnApplyRename.onClick = function () {
             triggerPrejmen();
             }
         function triggerPrejmen() {
