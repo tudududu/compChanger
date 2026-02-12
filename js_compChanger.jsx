@@ -1,11 +1,14 @@
-/* js_compsChanger
+/* js_compChanger
 copyright Jan Svatuska 2024
-240505
+240509
+
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
 v01b    Condition for dimension: if (inputX.length > 0)
         Dimension rozchozeno, lze zadat jen jednu stranu,
-        merime delku retezce, (null a undefined nefungovalo) */
+        merime delku retezce, (null a undefined nefungovalo)
+v01d    Pridan ZkracOvator
+*/
 
 (function (thisObj) {
     
@@ -13,14 +16,14 @@ v01b    Condition for dimension: if (inputX.length > 0)
 
     function newPanel(thisObj) {
 
-        var vers = '01';
-        var title = 'slate0vator (v' + vers + ')';
+        var vers = '01d';
+        var title = 'js_compChanger (v' + vers + ')';
 
         var win = (thisObj instanceof Panel) 
         ? 
         thisObj
         :
-        new Window('palette', 'compChanger', undefined);
+        new Window('palette', title, undefined);
         
         win.orientation = 'column';
         win.alignChildren = 'fill';
@@ -71,12 +74,12 @@ v01b    Condition for dimension: if (inputX.length > 0)
         var applyBtn = panel02a.add('button', undefined, 'Apply');
         
         // --- Action ---
-        function trigerChange() {
-            zkracovator(startTimeInput.text);
+        function triggerCompIn() {
+            var newIn = startTimeInput.text;
+            compParamChange(zkracovator, newIn);
         }
-
-        startTimeInput.onChange = trigerChange;
-        applyBtn.onClick = trigerChange;
+        startTimeInput.onChange = triggerCompIn;
+        applyBtn.onClick = triggerCompIn;
 
 
     //  ================panel03================oo
@@ -161,6 +164,14 @@ v01b    Condition for dimension: if (inputX.length > 0)
 
     }
     //------------------------callback------------
+    //  work area IN
+    function zkracovator(comp, startTimeL) {
+        var compDur = comp.duration;
+        var compDurFixed = compDur.toFixed(0); //round to integer
+        comp.workAreaStart = startTimeL;
+        comp.workAreaDuration = compDurFixed - startTimeL;
+    }
+    
 
     function fps(comp, input) {
         var inputDecimalFix = input.replace(/,/, ".");
@@ -175,31 +186,7 @@ v01b    Condition for dimension: if (inputX.length > 0)
         comp.duration = newDuration;
     }
     
-    /* function testNum(a) {
-    var result;
-    if (a > 0) {
-    result = 'positive';
-    } else {
-    result = 'NOT positive';
-    }
-    return result;
-    }*/
-
-    /* function dimension(comp, inputX, inputY) {
-        //var numX = comp.width;
-        var numX = parseInt(inputX);
-        var numY = parseInt(inputY);
-        if (inputX == "undefined") {
-        comp.width = numX;
-        }
-        if (inputY == "undefined") {
-        comp.height = numY;
-        }
-    } */
-
-
     function dimension(comp, inputX, inputY) {
-        //var numX = comp.width;
         var numX = parseInt(inputX);
         var numY = parseInt(inputY);
         if (inputX.length > 0) {
