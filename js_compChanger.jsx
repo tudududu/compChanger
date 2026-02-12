@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-240530
+240531
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -22,8 +22,9 @@ v02c    prejmenovator rozsiren na slozky a soubory
         Zkracovator stale spatne pocita konec
 v02d    add event listener key "Enter" to 'replace with'
         vylepsit prejmenovator
+v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
+        Zkracovator: Opraven vypocet konce
 */
-
 
 (function (thisObj) {
     //  globals: //
@@ -34,7 +35,7 @@ v02d    add event listener key "Enter" to 'replace with'
 
     function newPanel(thisObj) {
 
-        var vers = '02c';
+        var vers = '02d';
         var title = 'compChanger_v' + vers + '';
 
         var win = (thisObj instanceof Panel) 
@@ -68,13 +69,21 @@ v02d    add event listener key "Enter" to 'replace with'
             panel01group02.alignChildren = 'fill';
 
         var label = panel01group02.add('statictext', undefined, 'Replace with:');
-        var txtInputReplace = panel01group02.add('edittext', undefined, '');
+        var txtInputReplace = panel01group02.add('edittext', undefined, '', /*{enterKeySignalsOnChange: false}*/);
             txtInputReplace.characters = 25;
         
         //  apply Button
         var applyBtn = panel01group02.add('button', undefined, 'Apply');
         
-      // --- Action ---
+        // --- Action ---
+        txtInputReplace.addEventListener("keydown", function(kd) {pressed (kd)});
+        function pressed(k) {
+            if (k.keyName === "Enter") {
+                //alert("You pressed " + k.keyName);
+                triggerPrejmen();
+            }
+        }
+        //inDimensionX.onChange = triggerDimension;
             applyBtn.onClick = function () {
             triggerPrejmen();
             }
