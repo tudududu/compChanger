@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-250417
+250418
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -61,6 +61,7 @@ v03o    Prejmenovator: Removed limit to Comps only.
 v03p    Prejmenovator: Fix: Added 2nd condition enabling run if 1st or 2nd field != "".
 v03p2   Section Main moved to the end of the code.
 v03q    Separated "OK" button of panel01 and panel 02. Function doMain divided into doMain_01 and doMain_02.
+v03q2   Case conversion radio buttons added. Capitalize, Upper, Lower.
 */
 
 //===========globals
@@ -86,6 +87,7 @@ var message = "";
         var panel01 = win.add('panel', undefined, 'Prejmenovator');
             panel01.orientation = 'column';
             panel01.alignChildren = 'fill';
+        //  group02: radio buttons
         var p01g02 = panel01.add("group", undefined, { name: "p01g02" });
             p01g02.orientation = "column"; // Change orientation to column
             p01g02.alignment = "fill";
@@ -102,7 +104,7 @@ var message = "";
             p01g02_row2.alignChildren = ["fill", "center"];
             p01g02_row2.spacing = 10;
             p01g02_row2.margins = 0;
-
+        //  group01: fields
         var p01g01 = panel01.add('group');
             p01g01.orientation = 'column';
             p01g01.alignChildren = 'fill';
@@ -110,15 +112,47 @@ var message = "";
         panel01.label_01 = p01g01.add('statictext', undefined, 'Search:');
         panel01.txt_in_search = p01g01.add('edittext', undefined, '');
         panel01.txt_in_search.characters = 25;
-        panel01.label_02 = p01g01.add('statictext', undefined, 'Replace:');
-        // Add checkbox
-        // panel01.chkBox_01 = p01g01.add('checkbox', undefined, 'Capitalize');
-        // panel01.chkBox_01.value = false;
-        panel01.txt_in_replace = p01g01.add('edittext', undefined, '');
-        panel01.txt_in_replace.characters = 25;
+
+        // --- Shared group for Replace/Capitalize ---
+        var p01g01_replaceStack = p01g01.add('group');
+            p01g01_replaceStack.orientation = 'stack'; // stack overlays children
+
+        // Column group for label_02 and txt_in_replace
+        var p01g01_replaceCol = p01g01_replaceStack.add('group');
+            p01g01_replaceCol.orientation = 'column';
+            p01g01_replaceCol.alignChildren = 'fill';
+            p01g01_replaceCol.alignment = ['fill', 'top']; // <-- Add this line
+            // p01g01_replaceCol.minimumSize.width = 150;     // <-- Or set a preferred width
+
+        panel01.label_02 = p01g01_replaceCol.add('statictext', undefined, 'Replace:');
+            panel01.label_02.alignment = ['fill', 'top']; // <-- Add this line
+        panel01.txt_in_replace = p01g01_replaceCol.add('edittext', undefined, '');
+            panel01.txt_in_replace.characters = 25;
+            panel01.txt_in_replace.alignment = ['fill', 'top']; // <-- Add this line
+
+
+        var p01g01_replaceRow = p01g01_replaceStack.add('group');
+            p01g01_replaceRow.orientation = 'row';
+            p01g01_replaceRow.alignChildren = 'fill';
+            p01g01_replaceRow.visible = false; // Start hidden
+
+        // capRad in the same stack group
+        panel01.capRad = p01g01_replaceRow.add('radiobutton', undefined, 'Capitalize');
+        panel01.capRad.value = true;
+        panel01.capRad.visible = false; // Start hidden
+        panel01.uppRad = p01g01_replaceRow.add('radiobutton', undefined, 'Upper');
+        panel01.capRad.value = false;
+        panel01.capRad.visible = false; // Start hidden
+        panel01.uppRad = p01g01_replaceRow.add('radiobutton', undefined, 'Lower');
+        panel01.capRad.value = false;
+        panel01.capRad.visible = false; // Start hidden
 
         //  apply Button
         panel01.btnRename = panel01.add('button', undefined, 'Search and replace', {name: "Prejmenovator"});
+
+        // Add checkbox
+        // panel01.chkBox_01 = p01g01.add('checkbox', undefined, 'Capitalize');
+        // panel01.chkBox_01.value = false;
 
         //  ================panel01=sub================oo
         function doTextChange(target, newText) {
@@ -134,11 +168,14 @@ var message = "";
                 doTextChange(panel01.label_02, 'Replace with:');
                 panel01.label_02.visible = true;
                 panel01.txt_in_replace.visible = true; // Show the replace field
+                p01g01_replaceCol.visible = true;
+                p01g01_replaceRow.visible = false;
+                panel01.capRad.visible = false; // Hide the capitalize radio button
                 panel01.appRad.value = false;
                 panel01.remRad.value = false;
                 panel01.caseRad.value = false;
             };
-        panel01.appRad = p01g02_row1.add('radiobutton', undefined, 'Append');
+        panel01.appRad = p01g02_row1.add('radiobutton', undefined, 'Append     ');
             panel01.appRad.alignChildren = 'fill';
             panel01.appRad.onClick = function () {
                 doTextChange(panel01.btnRename, 'Append');
@@ -146,6 +183,9 @@ var message = "";
                 doTextChange(panel01.label_02, 'Append tail:');
                 panel01.label_02.visible = true;
                 panel01.txt_in_replace.visible = true; // Show the replace field
+                p01g01_replaceCol.visible = true;
+                p01g01_replaceRow.visible = false;
+                panel01.capRad.visible = false; // Hide the capitalize radio button
                 panel01.repRad.value = false;
                 panel01.remRad.value = false;
                 panel01.caseRad.value = false;
@@ -158,18 +198,24 @@ var message = "";
                 doTextChange(panel01.label_02, 'Remove from tail (number):');
                 panel01.label_02.visible = true;
                 panel01.txt_in_replace.visible = true; // Show the replace field
+                p01g01_replaceCol.visible = true;
+                p01g01_replaceRow.visible = false;
+                panel01.capRad.visible = false; // Hide the capitalize radio button
                 panel01.repRad.value = false;
                 panel01.appRad.value = false;
                 panel01.caseRad.value = false;
             };
-        panel01.caseRad = p01g02_row2.add('radiobutton', undefined, 'Capitalize');
+        panel01.caseRad = p01g02_row2.add('radiobutton', undefined, 'Convert case');
             panel01.caseRad.alignChildren = 'fill';
             panel01.caseRad.onClick = function () {
                 doTextChange(panel01.btnRename, 'Convert case');
                 doTextChange(panel01.label_01, 'Search for:');
-                doTextChange(panel01.label_02, 'Nothing here:');
+                // doTextChange(panel01.label_02, 'Nothing here:');
                 panel01.label_02.visible = false; // Hide the replace field
                 panel01.txt_in_replace.visible = false; // Hide the replace field
+                p01g01_replaceCol.visible = false;
+                p01g01_replaceRow.visible = true;
+                panel01.capRad.visible = true; // Show the capitalize radio button
                 panel01.repRad.value = false;
                 panel01.appRad.value = false;
                 panel01.remRad.value = false;
