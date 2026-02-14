@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-250220
+250221
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -53,10 +53,11 @@ v03g    Prejmenovator: EventListener added to 'replace with' and 'Apply' button.
 v03h    Prejmenovator: 3-way: Search&Replace, Append, Remove.
 v03i    Complete: Duration, FPS, Start, Duration including subComps.
 v03j    Reset input fields & unclick duration checkbox.
+v03k    Reset input fields except Prejmenovator.
 */
 
 //===========globals
-var vers = '03j';
+var vers = '03k';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
@@ -251,8 +252,8 @@ var message = "";
                 }
             }
             //  reset input fields & unclick duration checkbox
-            panel01.txt_in_search.text = "";
-            panel01.txt_in_replace.text = "";
+            // panel01.txt_in_search.text = "";
+            // panel01.txt_in_replace.text = "";
             panel02.txt_in_x.text = "";
             panel02.txt_in_y.text = "";
             panel02.txt_in_fps.text = "";
