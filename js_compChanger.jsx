@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-250418
+250515
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -63,10 +63,11 @@ v03p2   Section Main moved to the end of the code.
 v03q    Separated "OK" button of panel01 and panel 02. Function doMain divided into doMain_01 and doMain_02.
 v03q2   Case conversion radio buttons added. Capitalize, Upper, Lower.
 v03r    Prejmenovator: Case conversion radio buttons Capitalize, Upper, Lower. Connected.
+v03r2   Prejmenovator: Case conversion. Capitalize can recognize words separated by space, dash, or underscore.
 */
 
 //===========globals
-var vers = '03r';
+var vers = '03r2';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
@@ -369,9 +370,14 @@ var message = "";
             }
         } else if (panel.caseRad.value) {
             if (panel.capRad.value) {
-                newName = oldName
-                // Capitalize the first letter of each word
-                .replace(oldString, oldString[0].toUpperCase() + oldString.slice(1).toLowerCase());
+                // Capitalize the first letter of each word separated by space, dash, or underscore
+                var pattern = new RegExp(oldString, "g");
+                newName = oldName.replace(pattern, function(match) {
+                    // Split by space, dash, or underscore, capitalize each part, then join back
+                    return match.replace(/([^\s\-_]+)/g, function(word) {
+                        return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+                    });
+                });
             } else if (panel.uppRad.value) {
             newName = oldName
                 // toUpperCase
