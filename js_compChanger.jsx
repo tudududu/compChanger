@@ -1,7 +1,7 @@
 /* 
 js_compChanger
 copyright Jan Svatuska 2024
-250310
+250324
 
 v01a    Dimension section reposition 3D layer, but not 2D
         nefunguje pokud x = 0, nebo neni zadano
@@ -58,10 +58,11 @@ v03l    Prejmenovator: Case convertor. Radio buttons in 1 row.
 v03m    Prejmenovator: Case convertor. Radio buttons in 2 rows.
 v03n    Prejmenovator: UI - Case convertor + Append -> to aligne.
 v03o    Prejmenovator: Removed limit to Comps only.
+v03p    Prejmenovator: Fix: Added 2nd condition enabling run if 1st or 2nd field != "".
 */
 
 //===========globals
-var vers = '03o';
+var vers = '03p';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
@@ -269,7 +270,7 @@ var message = "";
             for (var index = 0; index < selection.length; index++) {
                 var item = selection[index];
                 
-                    if (panel01.txt_in_search.text != "") {
+                    if (panel01.txt_in_search.text != "" || panel01.txt_in_replace != "") {
                         prejmenOvator(item, panel01);
                     }
                 if (item instanceof CompItem) {  //  zbytek pracuje jen na comps
