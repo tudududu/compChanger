@@ -77,6 +77,209 @@ var vers = '03x';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
+function trimString(value) {
+    return value.replace(/^\s+|\s+$/g, '');
+}
+
+function replaceAllLiteral(input, searchValue, replaceValue) {
+    if (searchValue === '') {
+        return input;
+    }
+    return input.split(searchValue).join(replaceValue);
+}
+
+function parseCsvLine(line, delimiter) {
+    var columns = [];
+    var current = '';
+    var inQuotes = false;
+
+    for (var i = 0; i < line.length; i++) {
+        var ch = line.charAt(i);
+        if (ch === '"') {
+            if (inQuotes && i + 1 < line.length && line.charAt(i + 1) === '"') {
+                current += '"';
+                i++;
+            } else {
+                inQuotes = !inQuotes;
+            }
+        } else if (ch === delimiter && !inQuotes) {
+            columns.push(current);
+            current = '';
+        } else {
+            current += ch;
+        }
+    }
+    columns.push(current);
+    return columns;
+}
+
+function parseBatchRenameCsv(csvText) {
+    var text = csvText;
+    if (text.length > 0 && text.charCodeAt(0) === 65279) {
+        text = text.substring(1);
+    }
+
+    var lines = text.split(/\r\n|\n|\r/);
+    var delimiter = ',';
+    var rules = [];
+    var firstDataRow = true;
+
+    for (var i = 0; i < lines.length; i++) {
+        var rawLine = lines[i];
+        var line = trimString(rawLine);
+
+        if (line === '' || line.indexOf('#') === 0 || line.indexOf('//') === 0) {
+            continue;
+        }
+
+        if (firstDataRow) {
+            if (line.indexOf(';') !== -1 && line.indexOf(',') === -1) {
+                delimiter = ';';
+            }
+            firstDataRow = false;
+        }
+
+        var columns = parseCsvLine(rawLine, delimiter);
+        if (columns.length !== 2) {
+            return {
+                ok: false,
+                message: 'Invalid CSV at line ' + (i + 1) + '. Expected exactly 2 columns: search,replace.'
+            };
+        }
+
+        var searchText = trimString(columns[0]);
+        var replaceText = trimString(columns[1]);
+
+        if (rules.length === 0) {
+            var col0 = searchText.toLowerCase();
+            var col1 = replaceText.toLowerCase();
+            var isHeader = (col0 === 'search' || col0 === 'in') && (col1 === 'replace' || col1 === 'out');
+            if (isHeader) {
+                continue;
+            }
+        }
+
+        if (searchText === '') {
+            return {
+                ok: false,
+                message: 'Invalid CSV at line ' + (i + 1) + '. Search value cannot be empty.'
+            };
+        }
+
+        rules.push({
+            search: searchText,
+            replace: replaceText
+        });
+    }
+
+    if (rules.length === 0) {
+        return {
+            ok: false,
+            message: 'No valid rename rules found in the selected file.'
+        };
+    }
+
+    var deduped = [];
+    var indexBySearch = {};
+    var duplicateCount = 0;
+
+    for (var j = 0; j < rules.length; j++) {
+        var rule = rules[j];
+        if (indexBySearch.hasOwnProperty(rule.search)) {
+            deduped[indexBySearch[rule.search]].replace = rule.replace;
+            duplicateCount++;
+        } else {
+            indexBySearch[rule.search] = deduped.length;
+            deduped.push(rule);
+        }
+    }
+
+    return {
+        ok: true,
+        rules: deduped,
+        duplicateCount: duplicateCount
+    };
+}
+
+function updateBatchStatus(panel, statusText) {
+    panel.batchStatus.text = 'Status: Batch Rename: ' + statusText;
+}
+
+function refreshBatchStatus(panel) {
+    if (panel.batchRules.length === 0) {
+        updateBatchStatus(panel, 'Not loaded.');
+    } else {
+        var suffix = '';
+        if (!panel.repRad.value) {
+            suffix = ' Search mode only.';
+        } else if (!panel.batchEnabled) {
+            suffix = ' Disabled.';
+        }
+        updateBatchStatus(panel, 'List loaded (' + panel.batchRules.length + ' rules).' + suffix);
+    }
+}
+
+function loadBatchRulesFromDialog(panel) {
+    var selectedFile = File.openDialog('Load Batch Rename list (CSV)', '*.csv');
+    if (!selectedFile) {
+        return {
+            ok: false,
+            canceled: true,
+            message: 'Batch rename loading canceled.'
+        };
+    }
+
+    if (!selectedFile.exists) {
+        return {
+            ok: false,
+            canceled: false,
+            message: 'Selected file does not exist.'
+        };
+    }
+
+    selectedFile.encoding = 'UTF-8';
+    if (!selectedFile.open('r')) {
+        return {
+            ok: false,
+            canceled: false,
+            message: 'Cannot open the selected file.'
+        };
+    }
+
+    var fileContent = selectedFile.read();
+    selectedFile.close();
+
+    var parsed = parseBatchRenameCsv(fileContent);
+    if (!parsed.ok) {
+        return {
+            ok: false,
+            canceled: false,
+            message: parsed.message
+        };
+    }
+
+    panel.batchRules = parsed.rules;
+    panel.batchFilePath = selectedFile.fsName;
+
+    var duplicateInfo = '';
+    if (parsed.duplicateCount > 0) {
+        duplicateInfo = ' Duplicates resolved: ' + parsed.duplicateCount + ' (last row wins).';
+    }
+
+    return {
+        ok: true,
+        duplicateCount: parsed.duplicateCount,
+        message: 'List loaded from ' + selectedFile.name + '.' + duplicateInfo
+    };
+}
+
+function applyBatchRenameRules(inputName, rules) {
+    var outputName = inputName;
+    for (var i = 0; i < rules.length; i++) {
+        outputName = replaceAllLiteral(outputName, rules[i].search, rules[i].replace);
+    }
+    return outputName;
+}
     
 (function (thisObj) {
     newPanel(thisObj);
@@ -112,6 +315,9 @@ var message = "";
             p01g02_row2.alignChildren = ["fill", "center"];
             p01g02_row2.spacing = 10;
             p01g02_row2.margins = 0;
+        panel01.batchStatus = panel01.add('statictext', undefined, 'Status: Batch Rename: Not loaded.');
+            panel01.batchStatus.alignment = ['fill', 'top'];
+            panel01.batchStatus.characters = 36;
         //  group01: fields
         var p01g01 = panel01.add('group');
             p01g01.orientation = 'column';
@@ -166,6 +372,12 @@ var message = "";
         panel01.repRad = p01g02_row1.add('radiobutton', undefined, 'Search');
             panel01.repRad.alignChildren = 'fill';
             panel01.repRad.value = true;
+        panel01.batchChkBx = p01g02_row1.add('checkbox', undefined, 'batch');
+            panel01.batchChkBx.value = false;
+        panel01.batchEnabled = false;
+        panel01.batchRules = [];
+        panel01.batchFilePath = '';
+
             panel01.repRad.onClick = function () {
                 doTextChange(panel01.btnRename, 'Search and replace');
                 doTextChange(panel01.label_01, 'Search for:');
@@ -179,6 +391,9 @@ var message = "";
                 panel01.remRad.value = false;
                 panel01.caseRad.value = false;
                 panel01.searchChkBx.visible = false;
+                panel01.batchChkBx.visible = true;
+                panel01.batchChkBx.value = panel01.batchEnabled;
+                refreshBatchStatus(panel01);
             };
         panel01.appRad = p01g02_row1.add('radiobutton', undefined, 'Append');
             panel01.appRad.alignChildren = 'fill';
@@ -195,6 +410,10 @@ var message = "";
                 panel01.remRad.value = false;
                 panel01.caseRad.value = false;
                 panel01.searchChkBx.visible = false;
+                panel01.batchEnabled = false;
+                panel01.batchChkBx.value = false;
+                panel01.batchChkBx.visible = false;
+                refreshBatchStatus(panel01);
             };
 
         panel01.remRad = p01g02_row2.add('radiobutton', undefined, 'Remove');
@@ -212,6 +431,10 @@ var message = "";
                 panel01.appRad.value = false;
                 panel01.caseRad.value = false;
                 panel01.searchChkBx.visible = false;
+                panel01.batchEnabled = false;
+                panel01.batchChkBx.value = false;
+                panel01.batchChkBx.visible = false;
+                refreshBatchStatus(panel01);
             };
         panel01.caseRad = p01g02_row2.add('radiobutton', undefined, 'Case Conv');
             panel01.caseRad.alignChildren = 'fill';
@@ -228,7 +451,45 @@ var message = "";
                 panel01.appRad.value = false;
                 panel01.remRad.value = false;
                 panel01.searchChkBx.visible = true;
+                panel01.batchEnabled = false;
+                panel01.batchChkBx.value = false;
+                panel01.batchChkBx.visible = false;
+                refreshBatchStatus(panel01);
             };
+
+        panel01.batchChkBx.onClick = function () {
+            if (!panel01.repRad.value) {
+                panel01.batchChkBx.value = false;
+                panel01.batchEnabled = false;
+                refreshBatchStatus(panel01);
+                return;
+            }
+
+            if (panel01.batchChkBx.value) {
+                if (panel01.batchRules.length === 0) {
+                    var loadResult = loadBatchRulesFromDialog(panel01);
+                    if (!loadResult.ok) {
+                        panel01.batchEnabled = false;
+                        panel01.batchChkBx.value = false;
+                        refreshBatchStatus(panel01);
+                        if (!loadResult.canceled) {
+                            alert(loadResult.message);
+                        }
+                        return;
+                    }
+
+                    if (loadResult.duplicateCount > 0) {
+                        alert(loadResult.message);
+                    }
+                }
+
+                panel01.batchEnabled = true;
+            } else {
+                panel01.batchEnabled = false;
+            }
+
+            refreshBatchStatus(panel01);
+        };
 
         panel01.searchChkBx = p01g02_row2.add('checkbox', undefined, 'search off');
         panel01.searchChkBx.value = false;
@@ -371,7 +632,11 @@ var message = "";
         var newName = oldName;
         
         if (panel.repRad.value) {
-            newName = oldName.replace(oldString, newString);
+            if (panel.batchEnabled && panel.batchRules.length > 0) {
+                newName = applyBatchRenameRules(oldName, panel.batchRules);
+            } else {
+                newName = oldName.replace(oldString, newString);
+            }
         } else if (panel.appRad.value) {
             newName = (oldString + oldName + newString);
         } else if (panel.remRad.value) {
@@ -590,8 +855,18 @@ var message = "";
         } else {
             for (var index = 0; index < selection.length; index++) {
                 var item = selection[index];
-                
-                if (panel01.txt_in_search.text != "" || panel01.txt_in_replace != "") {
+
+                var shouldRun = (panel01.txt_in_search.text != "" || panel01.txt_in_replace.text != "");
+                if (panel01.repRad.value && panel01.batchEnabled) {
+                    if (panel01.batchRules.length == 0) {
+                        alert('Batch rename is enabled, but no list is loaded.');
+                        app.endUndoGroup();
+                        return;
+                    }
+                    shouldRun = true;
+                }
+
+                if (shouldRun) {
                     renamer(item, panel01);
                 }
             //  reset input fields & unclick duration checkbox
