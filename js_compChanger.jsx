@@ -67,10 +67,12 @@ v03r2   Prejmenovator: Case conversion. Capitalize can recognize words separated
 v03s    Prejmenovator: Case conversion. Search off checkbox added. Apply the change to the complete old name.
 v03t    Prejmenovator: Case conversion. Search off checkbox. Limited to the Case conversion.
 v03u    Prejmenovator: Case conversion. Search off checkbox. Limited fnc and visibility to the Case conversion.
+v03v    Prejmenovator: Case conversion. Checkbox label: Search off. Alerts cleanup Not a number -> Enter a number.
+v03w    Comp settings: Start: Event listener for Enter key added.
 */
 
 //===========globals
-var vers = '03u';
+var vers = '03v';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
@@ -234,7 +236,7 @@ var message = "";
 
         //  ================panel02================oo
         //  ================compSettings================oo
-        var panel02 = win.add('panel', undefined, 'Dimension');
+        var panel02 = win.add('panel', undefined, 'Comp settings');
             panel02.orientation = 'column';
             panel02.alignChildren = 'fill';
         var p02g01 = panel02.add('group');
@@ -284,6 +286,13 @@ var message = "";
             if (k.keyName === "Enter") {
                 //alert("You pressed " + k.keyName);
                 doMain_01(panel01); // Pass both panels to doMain
+            }
+        }
+        panel02.txt_in_start.addEventListener("keydown", function(kd) {pressed_p02 (kd)});
+        function pressed_p02(k) {
+            if (k.keyName === "Enter") {
+                //alert("You pressed " + k.keyName);
+                doMain_02(panel02); // Pass both panels to doMain
             }
         }
         //  "Enter" na tlacitku spusti funkci
