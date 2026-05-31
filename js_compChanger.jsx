@@ -227,7 +227,7 @@ var message = "";
                 panel01.searchChkBx.visible = true;
             };
 
-        panel01.searchChkBx = p01g02_row2.add('checkbox', undefined, undefined);
+        panel01.searchChkBx = p01g02_row2.add('checkbox', undefined, 'search off');
         panel01.searchChkBx.value = false;
         panel01.searchChkBx.visible = false;
 
@@ -323,7 +323,7 @@ var message = "";
         var startTimeL = panel.txt_in_start.text;
         if (startTimeL != "") {
             if(isNaN(parseFloat(startTimeL))) {
-                alertStr = ("Not a number for Width\r");
+                alertStr = ("Enter a number for duration\r");
                 inWorkAreaIn.text = "";    // clear field in case of NaN input
             } else {
         var compDur = comp.duration;
@@ -340,7 +340,7 @@ var message = "";
         var input = panel.txt_in_fps.text;
         if (input != "") {
             if(isNaN(parseFloat(input))) {
-                alertStr = ("Not a number for Width\r");
+                alertStr = ("Enter a number for FPS\r");
                 inFps.text = "";    // clear field in case of NaN input
             } else {
         var inputDecimalFix = input.replace(/,/, ".");
@@ -439,7 +439,7 @@ var message = "";
 
     function width(item, panel) {
         if (isNaN(parseInt(panel.txt_in_x.text))) {
-            message = (message + "Not a number value for Width\r");
+            message = (message + "Enter a number value for Width\r");
             panel.txt_in_x.text = ""; //empty field if it is bad so we don't try anymore
         } else {
             var oldWidth = item.width;
@@ -466,7 +466,7 @@ var message = "";
 
     function height(item, panel) {
         if (isNaN(parseInt(panel.txt_in_y.text))) {
-            message = (message + "Not a number value for Height\r");
+            message = (message + "Enter a number value for Height\r");
             panel.txt_in_y.text = ""; //empty field if it is bad so we don't try anymore
         } else {
             var oldHeight = item.height;
@@ -497,7 +497,7 @@ var message = "";
         var input = panel.txt_in_dur.text;
         if (input != "") {
             if(isNaN(parseFloat(input))) {
-                alertStr = ("Not a number for Duration\r");
+                alertStr = ("Enter a number for Duration\r");
                 panel.txt_in_dur.text = "";    // clear field in case of NaN input
             } else {
         var inputDecimalFix = input.replace(/,/, ".");
@@ -589,6 +589,7 @@ var message = "";
             // panel01.txt_in_replace.text = "";
             }
         }
+        app.endUndoGroup();
     }
 
     function doMain_02(panel02) {
