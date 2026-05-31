@@ -69,10 +69,11 @@ v03t    Prejmenovator: Case conversion. Search off checkbox. Limited to the Case
 v03u    Prejmenovator: Case conversion. Search off checkbox. Limited fnc and visibility to the Case conversion.
 v03v    Prejmenovator: Case conversion. Checkbox label: Search off. Alerts cleanup Not a number -> Enter a number.
 v03w    Comp settings: Start: Event listener for Enter key added.
+v03x    Prejmenovator: Renamed to Renamer.
 */
 
 //===========globals
-var vers = '03v';
+var vers = '03x';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
 //==================
@@ -90,8 +91,8 @@ var message = "";
         var buttonSize = [30, 23];
 
         // ================panel01================oo
-        // ================Prejmenovator================oo
-        var panel01 = win.add('panel', undefined, 'Prejmenovator');
+        // ================Renamer================oo
+        var panel01 = win.add('panel', undefined, 'Renamer');
             panel01.orientation = 'column';
             panel01.alignChildren = 'fill';
         //  group02: radio buttons
@@ -155,7 +156,7 @@ var message = "";
         panel01.capRad.visible = false; // Start hidden
 
         //  apply Button
-        panel01.btnRename = panel01.add('button', undefined, 'Search and replace', {name: "Prejmenovator"});
+        panel01.btnRename = panel01.add('button', undefined, 'Search and replace', {name: "Renamer"});
 
         //  ================panel01=sub================oo
         function doTextChange(target, newText) {
@@ -361,7 +362,7 @@ var message = "";
     }
 
 
-    function prejmenOvator(item, panel) {
+    function renamer(item, panel) {
 
         var oldString = panel.txt_in_search.text;
         var newString = panel.txt_in_replace.text;
@@ -591,7 +592,7 @@ var message = "";
                 var item = selection[index];
                 
                 if (panel01.txt_in_search.text != "" || panel01.txt_in_replace != "") {
-                    prejmenOvator(item, panel01);
+                    renamer(item, panel01);
                 }
             //  reset input fields & unclick duration checkbox
             // panel01.txt_in_search.text = "";
