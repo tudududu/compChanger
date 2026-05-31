@@ -39,3 +39,23 @@ Example result
 	Output: Word01alt_Word02_Word03alt_Word04
 - Input: Word01_Word02_Word03_Word04_Word05
 	Output: Word01alt_Word02_Word03alt_Word04_Word05alt
+
+Renamer filters and log
+
+Three checkboxes are available in one row under the Batch Rename status line:
+- Comps: include only CompItems.
+- Folders: include only FolderItems.
+- Log: write rename changes to a file.
+
+Filter behavior
+- Filters apply to all Renamer modes: Search (including Batch), Append, Remove, and Case Conv.
+- If both Comps and Folders are OFF, the run is blocked.
+
+Log behavior
+- Log writes changed names only (no unchanged/no-op rows).
+- The script creates a `log` folder next to the opened `.aep` file.
+- Log file name format: `compchanger_YYYYMMDD_HHMMSS.log`.
+- If Log is ON and the project is unsaved, the run is blocked until the project is saved.
+
+Example log line
+[CompItem] Old_Name -> New_Name

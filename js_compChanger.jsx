@@ -280,6 +280,69 @@ function applyBatchRenameRules(inputName, rules) {
     }
     return outputName;
 }
+
+function pad2(value) {
+    return (value < 10 ? '0' : '') + value;
+}
+
+function getLogTimestamp() {
+    var now = new Date();
+    return ''
+        + now.getFullYear()
+        + pad2(now.getMonth() + 1)
+        + pad2(now.getDate())
+        + '_'
+        + pad2(now.getHours())
+        + pad2(now.getMinutes())
+        + pad2(now.getSeconds());
+}
+
+function getProjectFolder() {
+    if (!app.project || app.project.file == null) {
+        return null;
+    }
+    return app.project.file.parent;
+}
+
+function ensureLogFolder(projectFolder) {
+    var logFolder = new Folder(projectFolder.fsName + '/log');
+    if (!logFolder.exists && !logFolder.create()) {
+        return null;
+    }
+    return logFolder;
+}
+
+function writeRenameLogFile(logFolder, logEntries) {
+    var filePath = logFolder.fsName + '/compchanger_' + getLogTimestamp() + '.log';
+    var logFile = new File(filePath);
+    logFile.encoding = 'UTF-8';
+
+    if (!logFile.open('w')) {
+        return {
+            ok: false,
+            message: 'Failed to write log file.'
+        };
+    }
+
+    logFile.writeln('compChanger rename log');
+    logFile.writeln('created: ' + (new Date()).toString());
+    if (app.project && app.project.file != null) {
+        logFile.writeln('project: ' + app.project.file.fsName);
+    }
+    logFile.writeln('changes: ' + logEntries.length);
+    logFile.writeln('');
+
+    for (var i = 0; i < logEntries.length; i++) {
+        var entry = logEntries[i];
+        logFile.writeln('[' + entry.itemType + '] ' + entry.oldName + ' -> ' + entry.newName);
+    }
+
+    logFile.close();
+    return {
+        ok: true,
+        path: logFile.fsName
+    };
+}
     
 (function (thisObj) {
     newPanel(thisObj);
@@ -318,6 +381,20 @@ function applyBatchRenameRules(inputName, rules) {
         panel01.batchStatus = panel01.add('statictext', undefined, 'Status: Batch Rename: Not loaded.');
             panel01.batchStatus.alignment = ['fill', 'top'];
             panel01.batchStatus.characters = 36;
+
+        var p01g03 = panel01.add('group');
+            p01g03.orientation = 'row';
+            p01g03.alignChildren = ['left', 'center'];
+            p01g03.spacing = 10;
+            p01g03.margins = 0;
+
+        panel01.compFilterChkBx = p01g03.add('checkbox', undefined, 'Comps');
+        panel01.compFilterChkBx.value = true;
+        panel01.folderFilterChkBx = p01g03.add('checkbox', undefined, 'Folders');
+        panel01.folderFilterChkBx.value = true;
+        panel01.logChkBx = p01g03.add('checkbox', undefined, 'Log');
+        panel01.logChkBx.value = false;
+
         //  group01: fields
         var p01g01 = panel01.add('group');
             p01g01.orientation = 'column';
@@ -632,6 +709,14 @@ function applyBatchRenameRules(inputName, rules) {
 
         var oldName = item.name; // nome da item
         var newName = oldName;
+        var changed = false;
+        var itemType = 'Item';
+
+        if (item instanceof CompItem) {
+            itemType = 'CompItem';
+        } else if (item instanceof FolderItem) {
+            itemType = 'FolderItem';
+        }
         
         if (panel.repRad.value) {
             if (panel.batchEnabled && panel.batchRules.length > 0) {
@@ -686,7 +771,10 @@ function applyBatchRenameRules(inputName, rules) {
         }
         //////////////////////
         try {
-            item.name = newName;
+            if (oldName != newName) {
+                item.name = newName;
+                changed = true;
+            }
         } catch (error ) {
             // just ignore errors; if it can't be named, what the hay
         }
@@ -694,7 +782,16 @@ function applyBatchRenameRules(inputName, rules) {
         newString = "";
         //////////////////////
         //  fixing broken expressions due to the change of the name;              
-        app.project.autoFixExpressions(oldName, newName);
+        if (changed) {
+            app.project.autoFixExpressions(oldName, newName);
+        }
+
+        return {
+            changed: changed,
+            oldName: oldName,
+            newName: newName,
+            itemType: itemType
+        };
     }
 
     function makeParentLayerOfAllUnparented(theComp, newParent) {
@@ -851,31 +948,78 @@ function applyBatchRenameRules(inputName, rules) {
         app.beginUndoGroup("Change Selected Comps");
         
         var selection = app.project.selection; // compositions
+        var logEntries = [];
+        var logEnabled = panel01.logChkBx.value;
+        var logFolder = null;
 
         if (selection.length == 0) {
             alert("Select a composition");
-        } else {
-            for (var index = 0; index < selection.length; index++) {
-                var item = selection[index];
+            app.endUndoGroup();
+            return;
+        }
 
-                var shouldRun = (panel01.txt_in_search.text != "" || panel01.txt_in_replace.text != "");
-                if (panel01.repRad.value && panel01.batchEnabled) {
-                    if (panel01.batchRules.length == 0) {
-                        alert('Batch rename is enabled, but no list is loaded.');
-                        app.endUndoGroup();
-                        return;
-                    }
-                    shouldRun = true;
-                }
+        if (!panel01.compFilterChkBx.value && !panel01.folderFilterChkBx.value) {
+            alert('Enable at least one filter: Comps or Folders.');
+            app.endUndoGroup();
+            return;
+        }
 
-                if (shouldRun) {
-                    renamer(item, panel01);
-                }
-            //  reset input fields & unclick duration checkbox
-            // panel01.txt_in_search.text = "";
-            // panel01.txt_in_replace.text = "";
+        if (logEnabled) {
+            var projectFolder = getProjectFolder();
+            if (projectFolder == null) {
+                alert('Log requires a saved project. Save the .aep file first.');
+                app.endUndoGroup();
+                return;
+            }
+
+            logFolder = ensureLogFolder(projectFolder);
+            if (logFolder == null) {
+                alert('Failed to create log folder in project directory.');
+                app.endUndoGroup();
+                return;
             }
         }
+
+        for (var index = 0; index < selection.length; index++) {
+            var item = selection[index];
+
+            var isComp = (item instanceof CompItem);
+            var isFolder = (item instanceof FolderItem);
+            var passesFilter = (isComp && panel01.compFilterChkBx.value)
+                || (isFolder && panel01.folderFilterChkBx.value);
+
+            if (!passesFilter) {
+                continue;
+            }
+
+            var shouldRun = (panel01.txt_in_search.text != "" || panel01.txt_in_replace.text != "");
+            if (panel01.repRad.value && panel01.batchEnabled) {
+                if (panel01.batchRules.length == 0) {
+                    alert('Batch rename is enabled, but no list is loaded.');
+                    app.endUndoGroup();
+                    return;
+                }
+                shouldRun = true;
+            }
+
+            if (shouldRun) {
+                var renameResult = renamer(item, panel01);
+                if (logEnabled && renameResult.changed) {
+                    logEntries.push(renameResult);
+                }
+            }
+        //  reset input fields & unclick duration checkbox
+        // panel01.txt_in_search.text = "";
+        // panel01.txt_in_replace.text = "";
+        }
+
+        if (logEnabled && logEntries.length > 0) {
+            var logWrite = writeRenameLogFile(logFolder, logEntries);
+            if (!logWrite.ok) {
+                alert(logWrite.message);
+            }
+        }
+
         app.endUndoGroup();
     }
 

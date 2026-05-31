@@ -1,3 +1,26 @@
+# 4.0.2 - 2026-05-31
+
+Added:
+- Renamer filters and log
+
+Three checkboxes are available in one row under the Batch Rename status line:
+- Comps: include only CompItems.
+- Folders: include only FolderItems.
+- Log: write rename changes to a file.
+
+Filter behavior
+- Filters apply to all Renamer modes: Search (including Batch), Append, Remove, and Case Conv.
+- If both Comps and Folders are OFF, the run is blocked.
+
+Log behavior
+- Log writes changed names only (no unchanged/no-op rows).
+- The script creates a `log` folder next to the opened `.aep` file.
+- Log file name format: `compchanger_YYYYMMDD_HHMMSS.log`.
+- If Log is ON and the project is unsaved, the run is blocked until the project is saved.
+
+Example log line
+[CompItem] Old_Name -> New_Name
+
 # 4.0.1 - 2026-05-31
 
 Added:
