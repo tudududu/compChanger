@@ -1,6 +1,21 @@
 # 4.0.2 - 2026-05-31
 
 Added:
+- Log behavior is now incremental per opened project session in js_compChanger.jsx:
+1. One log file reused per project session
+    Added session-level tracking variables at js_compChanger.jsx:75.
+    Added resolver that creates the log filename once per project folder/session and reuses it on later runs at js_compChanger.jsx:313.
+2. Append mode instead of overwrite
+    Log writer now opens file with append mode so each rename run adds a new block at js_compChanger.jsx:323.
+    Header before each new block
+    Each write now starts with a separator and header lines at js_compChanger.jsx:331.
+3. Header text updated
+    Changed from created to rename processed with full date string at js_compChanger.jsx:333, matching your requested format.
+
+
+# 4.0.2 - 2026-05-31
+
+Added:
 - Renamer filters and log
 
 Three checkboxes are available in one row under the Batch Rename status line:

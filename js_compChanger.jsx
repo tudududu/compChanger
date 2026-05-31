@@ -16,11 +16,8 @@ v01e    Zmena UI - zkracovator do comp panelu
         patrani: funguje pokud btn00 spousti jen triggerCompIn (ostatni funkce vypnute)
         nalez: ostatni fce vrati chybu, protoze nemaji osetreny chybejici vstup
 v02a    reorganizace, zkracovator spatne pocita konec, nic jineho nefunguje
-v02b    prejmenovator omezen pouze na comps
-v02c    prejmenovator rozsiren na slozky a soubory
         Opraveno - Zkracovator zastavoval cinnost na kompozicich kratsich nez 01s
         Zkracovator stale spatne pocita konec
-v02d    add event listener key "Enter" to 'replace with'
         vylepsit prejmenovator
 v02d    Prejmenovator: event listener key "Enter" added to 'replace with'
         Zkracovator: Opraven vypocet konce
@@ -28,7 +25,6 @@ v02e    Prejmenovator: event listener key "Enter" added to 'Apply'
 v02f    == v02e
 v02g    better describtion
         Dimension: priprava na vylepseni - zatim nepouzito, vlozeny 2 funkce:
-        makeParentLayerOfAllUnparented(), moveParent()
 v02h    better description, reorder
 v02i    new order - one run. Vubec nefunguje.
 
@@ -76,6 +72,8 @@ v03x    Prejmenovator: Renamed to Renamer.
 var vers = '03x';
 var title = 'compsChanger (v' + vers + ')';
 var message = "";
+var sessionLogProjectPath = '';
+var sessionLogFilePath = '';
 //==================
 function trimString(value) {
     return value.replace(/^\s+|\s+$/g, '');
@@ -312,20 +310,28 @@ function ensureLogFolder(projectFolder) {
     return logFolder;
 }
 
+function resolveSessionLogFile(logFolder) {
+    if (sessionLogFilePath === '' || sessionLogProjectPath !== logFolder.fsName) {
+        sessionLogProjectPath = logFolder.fsName;
+        sessionLogFilePath = logFolder.fsName + '/compchanger_' + getLogTimestamp() + '.log';
+    }
+    return new File(sessionLogFilePath);
+}
+
 function writeRenameLogFile(logFolder, logEntries) {
-    var filePath = logFolder.fsName + '/compchanger_' + getLogTimestamp() + '.log';
-    var logFile = new File(filePath);
+    var logFile = resolveSessionLogFile(logFolder);
     logFile.encoding = 'UTF-8';
 
-    if (!logFile.open('w')) {
+    if (!logFile.open('a')) {
         return {
             ok: false,
             message: 'Failed to write log file.'
         };
     }
 
+    logFile.writeln('----------------------------------------');
     logFile.writeln('compChanger rename log');
-    logFile.writeln('created: ' + (new Date()).toString());
+    logFile.writeln('rename processed ' + (new Date()).toString());
     if (app.project && app.project.file != null) {
         logFile.writeln('project: ' + app.project.file.fsName);
     }
@@ -336,6 +342,8 @@ function writeRenameLogFile(logFolder, logEntries) {
         var entry = logEntries[i];
         logFile.writeln('[' + entry.itemType + '] ' + entry.oldName + ' -> ' + entry.newName);
     }
+
+    logFile.writeln('');
 
     logFile.close();
     return {
