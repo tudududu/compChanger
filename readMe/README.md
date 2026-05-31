@@ -18,6 +18,7 @@ UI behavior
 	Status: Batch Rename: List loaded (N rules).
 - If batch is checked and no list is loaded yet, a file dialog prompts you to choose a CSV file.
 - Batch mode is active only in Search mode.
+- Checking batch ON always prompts for a new CSV.
 
 CSV format
 - Two columns per row: search,replace

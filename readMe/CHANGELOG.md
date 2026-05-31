@@ -1,3 +1,18 @@
+# 4.0.1 - 2026-05-31
+
+Added:
+- Updated batch checkbox handler at js_compChanger.jsx:460:
+1. ON now always calls loadBatchRulesFromDialog(...), regardless of whether a list was already loaded.
+2. If loading is canceled or fails, batch is turned back OFF.
+3. Previous loaded rules/path are restored on failed/canceled load, so you do not lose the old list accidentally.
+
+- Key lines
+    Handler start: js_compChanger.jsx:460
+    Save previous state before reload: js_compChanger.jsx:469
+    Always prompt for load on ON: js_compChanger.jsx:471
+    Restore previous list on failure/cancel: js_compChanger.jsx:473
+
+
 # 4.0.0 - 2026-05-31
 
 Added:

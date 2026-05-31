@@ -466,21 +466,23 @@ function applyBatchRenameRules(inputName, rules) {
             }
 
             if (panel01.batchChkBx.value) {
-                if (panel01.batchRules.length === 0) {
-                    var loadResult = loadBatchRulesFromDialog(panel01);
-                    if (!loadResult.ok) {
-                        panel01.batchEnabled = false;
-                        panel01.batchChkBx.value = false;
-                        refreshBatchStatus(panel01);
-                        if (!loadResult.canceled) {
-                            alert(loadResult.message);
-                        }
-                        return;
-                    }
-
-                    if (loadResult.duplicateCount > 0) {
+                var previousRules = panel01.batchRules;
+                var previousFilePath = panel01.batchFilePath;
+                var loadResult = loadBatchRulesFromDialog(panel01);
+                if (!loadResult.ok) {
+                    panel01.batchRules = previousRules;
+                    panel01.batchFilePath = previousFilePath;
+                    panel01.batchEnabled = false;
+                    panel01.batchChkBx.value = false;
+                    refreshBatchStatus(panel01);
+                    if (!loadResult.canceled) {
                         alert(loadResult.message);
                     }
+                    return;
+                }
+
+                if (loadResult.duplicateCount > 0) {
+                    alert(loadResult.message);
                 }
 
                 panel01.batchEnabled = true;
